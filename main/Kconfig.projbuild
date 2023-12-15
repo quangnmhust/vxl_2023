@@ -1,0 +1,137 @@
+menu "Firmware config" 
+
+    config NAME_DEVICE
+        string "Name Device"
+        default "VXL"
+        help
+            Name device.
+
+    config FIRMWARE_VERSION
+        string "Firmware version"
+        default "1.0.0"
+        help 
+            Firmware version.
+endmenu
+
+menu "WiFi Config Menu"
+
+    config SSID
+        string  "SSID"
+        default "Tom Bi"
+        help
+            SSID.
+
+    config PASSWORD
+        string  "PASSWORD"
+        default  "TBH123456"
+        help 
+            PASSWORD.
+
+    config MAXIMUM_AP
+        int "Maximum access points"
+        default  10
+        help 
+            Maximum access points.
+
+    config MAXIMUM_RETRY
+        int "Maximum retry"
+        default 25
+        help
+            Set the Maximum retry to avoid station reconnecting to the AP unlimited when the AP is really inexistent.
+
+    config SHOW_LIST_ACCESS_POINTS_FOUND
+        bool "Show list Access Points found."
+        default y
+        help
+            Show list Access Points found.
+
+endmenu
+
+menu "SHT31 configuration"
+    choice EXAMPLE_SHT3X_DEMO
+        prompt "Selection mode"
+        default EXAMPLE_SHT3X_DEMO_HL
+        help
+            Choose how to masure values from the sensor. See the main.c for
+            details.
+
+        config EXAMPLE_SHT3X_DEMO_HL    
+            bool "High level"
+            help
+                In this example it uses the high level function
+                sht3x_measure() to perform one measurement in each cycle.
+
+        config EXAMPLE_SHT3X_DEMO_LL
+            bool "Low level"
+            help
+                In this example it starts the measurement, waits for the
+                results and fetches the results using separate functions
+
+    endchoice
+
+    config SHT3X_ADDR
+        hex "I2C address of SHT3x"
+        default 0x44
+        help
+            I2C address of SHT3x, either 0x44 or 0x45. When ADDR pin is
+            grounded, choose 0x44. When ADDR pin is pulled up to VDD, choose
+            0x45.
+
+    config I2C_MASTER_SCL
+        int "SCL GPIO Number"
+        default 19 if IDF_TARGET_ESP32 || IDF_TARGET_ESP32S2 || IDF_TARGET_ESP32S3
+        help
+            GPIO number for I2C Master clock line.
+
+    config I2C_MASTER_SDA
+        int "SDA GPIO Number"
+        default 18 if IDF_TARGET_ESP32 || IDF_TARGET_ESP32S2 || IDF_TARGET_ESP32S3
+        help
+            GPIO number for I2C Master data line.
+endmenu
+
+menu "HTTP Config"
+    config CONFIG_WEB_SERVER
+    string "CONFIG_WEB_SERVER"
+    default "api.thingspeak.com"
+    help 
+        CONFIG_WEB_SERVER.
+    
+    config CONFIG_WEB_PORT
+        string  "CONFIG_WEB_PORT"
+        default  "80"
+        help 
+            CONFIG_WEB_PORT.
+
+    config API_KEY
+        string  "API_KEY"
+        default  "26U6PMXDCNABFA97"
+        help 
+            API_KEY.
+endmenu
+
+menu "ADC Config"
+    config MQ2_GPIO
+    int "MQ2 GPIO Number"
+    default 34
+    help 
+        MQ2 GPIO Number.
+    
+    config FL_GPIO  
+        int  "FL GPIO Number"
+        default  35
+        help 
+            FL GPIO Number.
+
+    config NUM_SAMPLEL
+        int  "Number of sampling"
+        default  100
+        help 
+           Number of sampling.  
+    
+    config NUM_ADC_WIDTH
+        string  "Number of ADC_WIDTH"
+        default  "ADC_WIDTH_BIT_10"
+        help 
+           Number of ADC_WIDTH.
+endmenu
