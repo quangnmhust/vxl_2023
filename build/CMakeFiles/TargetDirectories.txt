@@ -703,6 +703,13 @@ D:/Espressif/frameworks/vxl/build/esp-idf/i2cdev/CMakeFiles/list_install_compone
 D:/Espressif/frameworks/vxl/build/esp-idf/i2cdev/CMakeFiles/install.dir
 D:/Espressif/frameworks/vxl/build/esp-idf/i2cdev/CMakeFiles/install/local.dir
 D:/Espressif/frameworks/vxl/build/esp-idf/i2cdev/CMakeFiles/install/strip.dir
+D:/Espressif/frameworks/vxl/build/esp-idf/sds011/CMakeFiles/__idf_sds011.dir
+D:/Espressif/frameworks/vxl/build/esp-idf/sds011/CMakeFiles/edit_cache.dir
+D:/Espressif/frameworks/vxl/build/esp-idf/sds011/CMakeFiles/rebuild_cache.dir
+D:/Espressif/frameworks/vxl/build/esp-idf/sds011/CMakeFiles/list_install_components.dir
+D:/Espressif/frameworks/vxl/build/esp-idf/sds011/CMakeFiles/install.dir
+D:/Espressif/frameworks/vxl/build/esp-idf/sds011/CMakeFiles/install/local.dir
+D:/Espressif/frameworks/vxl/build/esp-idf/sds011/CMakeFiles/install/strip.dir
 D:/Espressif/frameworks/vxl/build/esp-idf/sht3x/CMakeFiles/__idf_sht3x.dir
 D:/Espressif/frameworks/vxl/build/esp-idf/sht3x/CMakeFiles/edit_cache.dir
 D:/Espressif/frameworks/vxl/build/esp-idf/sht3x/CMakeFiles/rebuild_cache.dir

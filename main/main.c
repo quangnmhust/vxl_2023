@@ -29,6 +29,7 @@
 #include "esp_adc_cal.h"
 
 #include "driver/adc.h"
+#include "driver/uart.h"
 
 #include "esp_random.h"
 
@@ -48,12 +49,27 @@
 
 
 #include <sht3x.h>
+#include "sds011.h"
 
 #include "Data_manager.h"
 #include "Device_manager.h"
 
 __attribute__((unused)) static const char *TAG = "Main";
-#define PERIOD_GET_DATA_FROM_SENSOR (TickType_t)(5000 / portTICK_RATE_MS)
+
+
+/** Sensor UART configuration. Adapt to your setup. */
+#define SDS011_UART_PORT (2)
+#define SDS011_RX_GPIO 16
+#define SDS011_TX_GPIO 17
+
+/** Time in seconds to let the SDS011 run before taking the measurment. */
+#define SDS011_ON_DURATION 1
+
+/** Interval to read and print the sensor values in seconds. Must be bigger than
+ * SDS011_ON_DURATION. */
+#define PRINT_INTERVAL 14
+
+#define PERIOD_GET_DATA_FROM_SENSOR (TickType_t)(15*60000 / portTICK_RATE_MS)
 //#define PERIOD_SAVE_DATA_SENSOR_TO_SDCARD (TickType_t)(2500 / portTICK_RATE_MS)
 #define PERIOD_SAVE_DATA_AFTER_WIFI_RECONNECT (TickType_t)(1000 / portTICK_RATE_MS)
 
@@ -107,6 +123,25 @@ QueueHandle_t dataSensorIntermediate_queue;
 static void http_app_start(void);
 static void sht31_start(void);
 static void adc_start(void);
+static void sds011_start(void);
+
+static const struct sds011_tx_packet sds011_tx_sleep_packet = {
+    .head = SDS011_PACKET_HEAD,
+    .command = SDS011_CMD_TX,
+    .sub_command = SDS011_TX_CMD_SLEEP_MODE,
+    .payload_sleep_mode = {.method = SDS011_METHOD_SET,
+                           .mode = SDS011_SLEEP_MODE_ENABLED},
+    .device_id = SDS011_DEVICE_ID_ALL,
+    .tail = SDS011_PACKET_TAIL};
+
+static const struct sds011_tx_packet sds011_tx_wakeup_packet = {
+    .head = SDS011_PACKET_HEAD,
+    .command = SDS011_CMD_TX,
+    .sub_command = SDS011_TX_CMD_SLEEP_MODE,
+    .payload_sleep_mode = {.method = SDS011_METHOD_SET,
+                           .mode = SDS011_SLEEP_MODE_DISABLED},
+    .device_id = SDS011_DEVICE_ID_ALL,
+    .tail = SDS011_PACKET_TAIL};
 
 static void initialize_nvs(void)
 {
@@ -196,8 +231,9 @@ void WIFI_initSTA (void) {
 
 void getDataFromSensor_task(void* parameters) {
 
-	sht31_start();
-	adc_start();
+	sds011_start();
+//	sht31_start();
+	// adc_start();
 
 	struct dataSensor_st dataTemp;
 	struct moduleError_st errorTemp;
@@ -208,8 +244,8 @@ void getDataFromSensor_task(void* parameters) {
 	while(1){
 		dataTemp.temperature = dataRaw.temperature;
 		dataTemp.humidity = dataRaw.humidity;
-		dataTemp.CO = (float)dataRaw.CO/1.0;
-		dataTemp.CO2 = (float)dataRaw.CO2/1.0;
+		dataTemp.CO = (float)dataRaw.CO; //pm10
+		dataTemp.CO2 = (float)dataRaw.CO2; //pm2.5
 
 		ESP_LOGI(__func__, "Read data from sensors completed!");
 		if (xSemaphoreTake(allocateData_semaphore, portMAX_DELAY) == pdPASS)
@@ -233,6 +269,8 @@ void getDataFromSensor_task(void* parameters) {
 }
 
 void httpPublishMessage_task(void* parameters) {
+
+	vTaskDelay((TickType_t)(5000 / portTICK_RATE_MS));
     sentDataToHTTP_semaphore = xSemaphoreCreateMutex();
 
     const struct addrinfo hints = {
@@ -297,7 +335,7 @@ void httpPublishMessage_task(void* parameters) {
 							ESP_LOGI(__func__, "HTTP client publish message success (^人^).\n");
 						}
 					}
-					vTaskDelay((TickType_t)(1000 / portTICK_RATE_MS));
+					vTaskDelay((TickType_t)(14*30100 / portTICK_RATE_MS));
 				}
 			}
 			else
@@ -319,7 +357,7 @@ void httpPublishMessage_task(void* parameters) {
 				sizeof(receiving_timeout)) < 0) {
 			ESP_LOGE(__func__, "... failed to set socket receiving timeout");
 			close(s);
-			vTaskDelay((TickType_t)(4000 / portTICK_RATE_MS));
+			vTaskDelay((TickType_t)(2000 / portTICK_RATE_MS));
 			continue;
 		}
 		ESP_LOGI(__func__, "... set socket receiving timeout success");
@@ -361,7 +399,8 @@ static void http_app_start(void) {
 			ESP_LOGI(__func__,"SHT3x Sensor: %.2f °C, %.2f %%\n", SHT31_temperature, SHT31_humidity);
 
 			// wait until 5 seconds are over
-			vTaskDelayUntil(&last_wakeup, pdMS_TO_TICKS(5000));
+//			vTaskDelayUntil(&, pdMS_TO_TICKS(5000));
+			vTaskDelayUntil(&last_wakeup, pdMS_TO_TICKS(PRINT_INTERVAL * 60000));
 		}
 	}
 
@@ -393,7 +432,8 @@ static void http_app_start(void) {
 			ESP_LOGI(__func__,"SHT3x Sensor: %.2f °C, %.2f %%\n", SHT31_temperature, SHT31_humidity);
 
 			// wait until 5 seconds are over
-			vTaskDelayUntil(&last_wakeup, pdMS_TO_TICKS(5000));
+//			vTaskDelayUntil(&last_wakeup, pdMS_TO_TICKS(5000));
+			vTaskDelayUntil(&last_wakeup, pdMS_TO_TICKS(PRINT_INTERVAL * 60000));
 		}
 	}
 
@@ -503,7 +543,56 @@ static void adc_start(void){
     print_char_val_type(val_type);
 
 	xTaskCreate(adcReadData_Task, "ADC Task", (1024 * 32), NULL, (UBaseType_t)25, &adcGetDataFromSensorTask_handle);
+}
 
+void data_task(void* pvParameters) {
+  struct sds011_rx_packet rx_packet;
+  TickType_t xLastWakeTime;
+  xLastWakeTime = xTaskGetTickCount();
+  for (;;) {
+    /** Wake the sensor up. */
+    sds011_send_cmd_to_queue(&sds011_tx_wakeup_packet, 0);
+
+    /** Give it a few seconds to create some airflow. */
+    vTaskDelay(pdMS_TO_TICKS(SDS011_ON_DURATION * 5000));
+
+    /** Read the data (which is the latest when data queue size is 1). */
+    if (sds011_recv_data_from_queue(&rx_packet, 0) == SDS011_OK) {
+      float pm2_5;
+      float pm10;
+      printf("%x\n",rx_packet.payload_query_data.pm2_5_high);
+      printf("%x\n",rx_packet.payload_query_data.pm2_5_low);
+
+      pm2_5 = ((rx_packet.payload_query_data.pm2_5_high << 8) |
+               rx_packet.payload_query_data.pm2_5_low) /
+              10.0;
+      pm10 = ((rx_packet.payload_query_data.pm10_high << 8) |
+              rx_packet.payload_query_data.pm10_low) /
+             10.0;
+
+      printf(
+          "PM2.5: %.2f\n"
+          "PM10: %.2f\n",
+          pm2_5, pm10);
+
+		dataRaw.CO2 = pm2_5; // pm2.5
+		dataRaw.CO = pm10; //pm10
+
+      /** Set the sensor to sleep. */
+      sds011_send_cmd_to_queue(&sds011_tx_sleep_packet, 0);
+
+      /** Wait for next interval time. */
+      vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(PRINT_INTERVAL * 30000));
+    }
+  }
+}
+
+static void sds011_start(void){
+	sds011_begin(SDS011_UART_PORT, SDS011_TX_GPIO, SDS011_RX_GPIO);
+
+  /** Create the measurement task. */
+  assert(xTaskCreatePinnedToCore(data_task, "sds011", 2048, NULL, 0, NULL, 1) ==
+         pdTRUE);
 }
 
 void app_main(void)

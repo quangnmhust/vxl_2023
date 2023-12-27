@@ -73,4 +73,5 @@ D:/Espressif/frameworks/vxl/build/esp-idf/main/libmain.a
 D:/Espressif/frameworks/vxl/build/esp-idf/Data_manager/libData_manager.a
 D:/Espressif/frameworks/vxl/build/esp-idf/Device_manager/libDevice_manager.a
 D:/Espressif/frameworks/vxl/build/esp-idf/i2cdev/libi2cdev.a
+D:/Espressif/frameworks/vxl/build/esp-idf/sds011/libsds011.a
 D:/Espressif/frameworks/vxl/build/esp-idf/sht3x/libsht3x.a

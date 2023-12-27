@@ -73,4 +73,5 @@ $<TARGET_FILE:__idf_main>
 $<TARGET_FILE:__idf_Data_manager>
 $<TARGET_FILE:__idf_Device_manager>
 $<TARGET_FILE:__idf_i2cdev>
+$<TARGET_FILE:__idf_sds011>
 $<TARGET_FILE:__idf_sht3x>

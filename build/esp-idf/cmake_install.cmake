@@ -126,6 +126,7 @@ if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   include("D:/Espressif/frameworks/vxl/build/esp-idf/Device_manager/cmake_install.cmake")
   include("D:/Espressif/frameworks/vxl/build/esp-idf/esp_idf_lib_helpers/cmake_install.cmake")
   include("D:/Espressif/frameworks/vxl/build/esp-idf/i2cdev/cmake_install.cmake")
+  include("D:/Espressif/frameworks/vxl/build/esp-idf/sds011/cmake_install.cmake")
   include("D:/Espressif/frameworks/vxl/build/esp-idf/sht3x/cmake_install.cmake")
 
 endif()
